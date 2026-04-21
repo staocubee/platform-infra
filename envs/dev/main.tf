@@ -1,5 +1,3 @@
-
-
 provider "google" {
   project = var.project_id
   region  = var.region
@@ -67,19 +65,11 @@ module "iam" {
 }
 
 provider "kubernetes" {
-  config_path = pathexpand("~/.kube/config")
+  host                   = "https://${module.gke.endpoint}"
+  token                  = data.google_client_config.default.access_token
+  cluster_ca_certificate = base64decode(module.gke.ca_certificate)
 }
 
-provider "helm" {
-  kubernetes {
-    config_path = pathexpand("~/.kube/config")
-  }
-}
-
-resource "time_sleep" "wait_for_gke" {
-  depends_on      = [module.gke]
-  create_duration = "60s"
-}
 
 module "static_ip" {
   source     = "../../modules/static-ip"

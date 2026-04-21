@@ -2,19 +2,13 @@ resource "google_container_cluster" "gke" {
   name     = var.name
   location = var.region
 
+  deletion_protection = false
 
 
   network    = var.network
   subnetwork = var.subnetwork
 
   enable_autopilot = true
-
-
-  timeouts {
-    create = "45m"
-    update = "45m"
-    delete = "45m"
-  }
 
   ip_allocation_policy {
     cluster_secondary_range_name  = "pods"

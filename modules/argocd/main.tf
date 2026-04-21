@@ -33,8 +33,8 @@ resource "helm_release" "argocd" {
         }
         extraArgs = {
           "insecure" = tostring(var.admin_insecure)
-          "rootpath"  = "/argocd"
-          "basehref"  = "/argocd"
+          "rootpath" = "/argocd"
+          "basehref" = "/argocd"
         }
       }
     })
