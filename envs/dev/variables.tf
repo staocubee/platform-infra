@@ -13,19 +13,6 @@ variable "artifact_repositories" {
   type        = list(string)
 }
 
-variable "argocd_namespace" {
-  type    = string
-  default = "argocd"
-}
-
-variable "argocd_chart_version" {
-  type    = string
-  default = "7.8.2"
-}
-
-variable "argocd_hostname" {
-  type = string
-}
 variable "admin_insecure" {
   type    = bool
   default = true

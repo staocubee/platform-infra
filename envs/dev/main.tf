@@ -81,16 +81,6 @@ resource "time_sleep" "wait_for_gke" {
   create_duration = "60s"
 }
 
-module "argocd" {
-  source     = "../../modules/argocd"
-  depends_on = [time_sleep.wait_for_gke]
-
-  chart_version  = var.argocd_chart_version
-  namespace      = var.argocd_namespace
-  hostname       = var.argocd_hostname
-  admin_insecure = true
-}
-
 module "static_ip" {
   source     = "../../modules/static-ip"
   name       = "dev-platform-ip"
