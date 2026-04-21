@@ -3,6 +3,7 @@
 provider "google" {
   project = var.project_id
   region  = var.region
+
 }
 
 locals {
@@ -75,8 +76,14 @@ provider "helm" {
   }
 }
 
+resource "time_sleep" "wait_for_gke" {
+  depends_on = [module.gke]
+  create_duration = "60s"
+}
+
 module "argocd" {
   source = "../../modules/argocd"
+  depends_on = [time_sleep.wait_for_gke]
 
   chart_version   = var.argocd_chart_version
   namespace       = var.argocd_namespace
