@@ -40,7 +40,7 @@ module "gke" {
 # Artifact Registry (CREATE)
 # -------------------------
 module "artifact_registry" {
-  source = "../../modules/artifact-registry"
+  source       = "../../modules/artifact-registry"
   region       = var.region
   repositories = ["dev-repo"]
 }
@@ -61,7 +61,7 @@ module "artifact_registry_iam" {
 # Project IAM
 # -------------------------
 module "iam" {
-  source = "../../modules/iam"
+  source                = "../../modules/iam"
   project_id            = var.project_id
   service_account_email = local.service_account_email
 }
@@ -77,23 +77,23 @@ provider "helm" {
 }
 
 resource "time_sleep" "wait_for_gke" {
-  depends_on = [module.gke]
+  depends_on      = [module.gke]
   create_duration = "60s"
 }
 
 module "argocd" {
-  source = "../../modules/argocd"
+  source     = "../../modules/argocd"
   depends_on = [time_sleep.wait_for_gke]
 
-  chart_version   = var.argocd_chart_version
-  namespace       = var.argocd_namespace
-  hostname        = var.argocd_hostname
-  admin_insecure  = true
+  chart_version  = var.argocd_chart_version
+  namespace      = var.argocd_namespace
+  hostname       = var.argocd_hostname
+  admin_insecure = true
 }
 
 module "static_ip" {
-  source = "../../modules/static-ip"
-  name   = "dev-platform-ip"
-  region = var.region
+  source     = "../../modules/static-ip"
+  name       = "dev-platform-ip"
+  region     = var.region
   project_id = var.project_id
 }

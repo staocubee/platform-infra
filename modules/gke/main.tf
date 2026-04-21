@@ -2,7 +2,7 @@ resource "google_container_cluster" "gke" {
   name     = var.name
   location = var.region
 
-  deletion_protection = false
+
 
   network    = var.network
   subnetwork = var.subnetwork
