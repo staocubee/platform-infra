@@ -1,0 +1,97 @@
+name: Dev Platform Bootstrap
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  CLUSTER_NAME: dev-gke
+  ARGOCD_NAMESPACE: argocd
+  PLATFORM_SERVICES_REPO: staocubee/platform-services
+
+jobs:
+  infra-and-bootstrap:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout platform-infra
+        uses: actions/checkout@v4
+        with:
+          path: platform-infra
+
+      - name: Checkout platform-services
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.PLATFORM_SERVICES_REPO }}
+          path: platform-services
+          token: ${{ secrets.CROSS_REPO_READ_TOKEN }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Terraform init
+        working-directory: platform-infra/envs/dev
+        run: terraform init
+
+      - name: Terraform validate
+        working-directory: platform-infra/envs/dev
+        run: terraform validate
+
+      - name: Terraform apply
+        working-directory: platform-infra/envs/dev
+        run: terraform apply -auto-approve
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.CLUSTER_NAME }}
+          location: ${{ env.REGION }}
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Ensure ArgoCD namespace exists
+        run: |
+          kubectl create namespace "$ARGOCD_NAMESPACE" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Install ArgoCD from pinned manifest
+        run: |
+          kubectl apply -n "$ARGOCD_NAMESPACE" --server-side --force-conflicts \
+            -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+      - name: Wait for ArgoCD
+        run: |
+          kubectl rollout status deployment/argocd-server -n "$ARGOCD_NAMESPACE" --timeout=300s
+          kubectl rollout status deployment/argocd-repo-server -n "$ARGOCD_NAMESPACE" --timeout=300s
+          kubectl rollout status statefulset/argocd-application-controller -n "$ARGOCD_NAMESPACE" --timeout=300s
+
+      - name: Apply root app
+        run: |
+          kubectl apply -f platform-services/bootstrap/root-app.yaml -n "$ARGOCD_NAMESPACE"
+
+      - name: Show ArgoCD apps
+        run: |
+          kubectl get applications -n "$ARGOCD_NAMESPACE" || true
+          kubectl get pods -A
