@@ -20,7 +20,7 @@ env:
 jobs:
   infra-and-bootstrap:
     runs-on: ubuntu-latest
-    environment: dev
+    environment: Dev
     defaults:
       run:
         shell: bash
