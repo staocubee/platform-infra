@@ -68,7 +68,9 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-
+  kubernetes = {
+    config_path = pathexpand("~/.kube/config")
+  }
 }
 
 module "argocd" {
