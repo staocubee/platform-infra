@@ -13,7 +13,7 @@ resource "helm_release" "argocd" {
 
   create_namespace = false
   wait             = true
-  timeout          = 900
+  timeout          = 2700
 
   values = [
     yamlencode({
@@ -30,6 +30,11 @@ resource "helm_release" "argocd" {
       server = {
         service = {
           type = "ClusterIP"
+        }
+        extraArgs = {
+          "insecure" = tostring(var.admin_insecure)
+          "rootpath"  = "/argocd"
+          "basehref"  = "/argocd"
         }
       }
     })

@@ -6,7 +6,6 @@ resource "google_container_cluster" "gke" {
   subnetwork = var.subnetwork
 
   enable_autopilot = true
-  deletion_protection = false
 
   ip_allocation_policy {
     cluster_secondary_range_name  = "pods"
