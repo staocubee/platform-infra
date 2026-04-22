@@ -1,0 +1,59 @@
+name: Dev Unlock Infra State
+
+on:
+  workflow_dispatch:
+    inputs:
+      lock_id:
+        description: "Terraform lock ID to unlock"
+        required: true
+        type: string
+      confirm:
+        description: 'Type UNLOCK to confirm'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: platform-infra-dev-unlock
+  cancel-in-progress: false
+
+jobs:
+  unlock:
+    if: ${{ inputs.confirm == 'UNLOCK' }}
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Terraform init
+        working-directory: envs/dev
+        run: terraform init -reconfigure
+
+      - name: Show current lock target
+        working-directory: envs/dev
+        run: |
+          echo "About to unlock lock ID: ${{ inputs.lock_id }}"
+          echo "State backend: gs://infra-setup-state-bucket/platform-infra/dev"
+
+      - name: Force unlock
+        working-directory: envs/dev
+        run: terraform force-unlock -force "${{ inputs.lock_id }}"
