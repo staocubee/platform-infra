@@ -53,6 +53,12 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+          terraform_wrapper: false
+
       - name: Terraform init
         working-directory: platform-infra/envs/dev
         run: terraform init
@@ -96,3 +102,10 @@ jobs:
         run: |
           kubectl get applications -n "$ARGOCD_NAMESPACE" || true
           kubectl get pods -A
+
+      - name: Show Certificates, gateways and virtualservices
+        run: |
+          kubectl get certificates -A  || true
+          kubectl get secret argocd-tls -n istio-system  || true
+          kubectl get gw -A   || true                          
+          kubectl get virtualservice -A || true
