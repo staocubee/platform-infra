@@ -8,7 +8,7 @@
 *.tfstate.*
 
 # Terraform variables (NEVER push secrets)
-*.tfvars
+# *.tfvars
 *.tfvars.json
 
 # Lock files 
